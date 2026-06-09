@@ -7,41 +7,133 @@
   window.__instaformActive = true;
 
   // ─── Field-matching rules ────────────────────────────────────────────────
-  // Priority: (1) autocomplete attr exact match  (2) regex across name/id/label/placeholder
+  // Priority: (1) autocomplete attr  (2) regex against normalized token variants
+  //
+  // Regexes match AFTER tokenVariants() has stripped qualifiers like "Home Phone" → "phone",
+  // "First Name:" → "first name", "YourFirstName" → "first name", etc.
 
   const RULES = [
     // Personal
-    { key: 'personal.firstName',        ac: ['given-name'],                  rx: [/^(first[\s_-]?name|fname|given[\s_-]?name|forename)$/i] },
-    { key: 'personal.lastName',         ac: ['family-name'],                 rx: [/^(last[\s_-]?name|lname|surname|family[\s_-]?name)$/i] },
-    { key: 'personal.fullName',         ac: ['name'],                        rx: [/^(full[\s_-]?name|your[\s_-]?name|^name$)$/i] },
-    { key: 'personal.email',            ac: ['email'],                       rx: [/^(e[\s_-]?mail|email[\s_-]?address)$/i] },
-    { key: 'personal.phone',            ac: ['tel', 'tel-national'],         rx: [/^(phone|mobile|tel|cell|(phone|mobile|contact)[\s_-]?number)$/i] },
-    { key: 'personal.dob',             ac: ['bday'],                        rx: [/^(dob|date[\s_-]?of[\s_-]?birth|birth[\s_-]?date|birthday|born)$/i] },
-    { key: 'personal.gender',           ac: ['sex'],                         rx: [/^(gender|sex)$/i] },
-    { key: 'personal.nationality',      ac: [],                              rx: [/^(nationality|citizenship)$/i] },
+    { key: 'personal.firstName',
+      ac: ['given-name'],
+      rx: [/^(first[\s_-]?name|fname|given[\s_-]?name|forename|first)$/i] },
+    { key: 'personal.lastName',
+      ac: ['family-name'],
+      rx: [/^(last[\s_-]?name|lname|surname|family[\s_-]?name)$/i] },
+    { key: 'personal.fullName',
+      ac: ['name'],
+      rx: [/^(full[\s_-]?name|your[\s_-]?name|name)$/i] },
+    { key: 'personal.email',
+      ac: ['email'],
+      rx: [/^(e[\s_-]?mail([\s_-]?address)?)$/i] },
+    { key: 'personal.phone',
+      ac: ['tel', 'tel-national', 'tel-local'],
+      rx: [/^(phone([\s_-]?number)?|mobile([\s_-]?number)?|telephone|tel|cell([\s_-]?phone)?)$/i] },
+    { key: 'personal.dob',
+      ac: ['bday'],
+      rx: [/^(dob|date[\s_-]?of[\s_-]?birth|birth[\s_-]?date|birthday|born)$/i] },
+    { key: 'personal.gender',
+      ac: ['sex'],
+      rx: [/^(gender|sex)$/i] },
+    { key: 'personal.nationality',
+      ac: [],
+      rx: [/^(nationality|citizenship)$/i] },
     // Address
-    { key: 'personal.address.street',   ac: ['street-address','address-line1'], rx: [/^(address|street|addr|address[\s_-]?line[\s_-]?1|street[\s_-]?address)$/i] },
-    { key: 'personal.address.city',     ac: ['address-level2'],              rx: [/^(city|town|locality)$/i] },
-    { key: 'personal.address.state',    ac: ['address-level1'],              rx: [/^(state|province|region|county)$/i] },
-    { key: 'personal.address.zip',      ac: ['postal-code'],                 rx: [/^(zip|postal[\s_-]?code|pin[\s_-]?code|pincode|postcode)$/i] },
-    { key: 'personal.address.country',  ac: ['country', 'country-name'],     rx: [/^(country)$/i] },
+    { key: 'personal.address.street',
+      ac: ['street-address', 'address-line1'],
+      rx: [/^(address([\s_-]?line[\s_-]?(1|one))?|street([\s_-]?address)?|addr(ess)?)$/i] },
+    { key: 'personal.address.city',
+      ac: ['address-level2'],
+      rx: [/^(city|town|locality)$/i] },
+    { key: 'personal.address.state',
+      ac: ['address-level1'],
+      rx: [/^(state([\s_-]?province)?|province|region|county)$/i] },
+    { key: 'personal.address.zip',
+      ac: ['postal-code'],
+      rx: [/^(zip([\s_-]?code)?|postal[\s_-]?code|pin[\s_-]?code|pincode|postcode)$/i] },
+    { key: 'personal.address.country',
+      ac: ['country', 'country-name'],
+      rx: [/^(country([\s_-]?name)?)$/i] },
     // Professional (first entry)
-    { key: 'professional.0.company',    ac: ['organization'],                rx: [/^(company|employer|org(anization|anisation)?|workplace|firm)$/i] },
-    { key: 'professional.0.title',      ac: ['organization-title'],          rx: [/^(job[\s_-]?title|title|designation|position|role|occupation)$/i] },
-    { key: 'professional.0.startDate',  ac: [],                              rx: [/^(start[\s_-]?date|from[\s_-]?date|employment[\s_-]?start)$/i] },
-    { key: 'professional.0.endDate',    ac: [],                              rx: [/^(end[\s_-]?date|to[\s_-]?date|employment[\s_-]?end)$/i] },
+    { key: 'professional.0.company',
+      ac: ['organization'],
+      rx: [/^(company|employer|org(anization|anisation)?|workplace|firm)$/i] },
+    { key: 'professional.0.title',
+      ac: ['organization-title'],
+      rx: [/^(job[\s_-]?title|title|designation|position|role|occupation)$/i] },
+    { key: 'professional.0.startDate',
+      ac: [],
+      rx: [/^(start[\s_-]?date|from[\s_-]?date|employment[\s_-]?start)$/i] },
+    { key: 'professional.0.endDate',
+      ac: [],
+      rx: [/^(end[\s_-]?date|to[\s_-]?date|employment[\s_-]?end)$/i] },
     // Academic (first entry)
-    { key: 'academic.0.institution',    ac: [],                              rx: [/^(university|college|institution|school|institute)$/i] },
-    { key: 'academic.0.degree',         ac: [],                              rx: [/^(degree|qualification|education[\s_-]?level|highest[\s_-]?education)$/i] },
-    { key: 'academic.0.field',          ac: [],                              rx: [/^(field[\s_-]?of[\s_-]?study|major|course|discipline|subject)$/i] },
-    { key: 'academic.0.gpa',            ac: [],                              rx: [/^(gpa|cgpa|grade|percentage)$/i] },
-    { key: 'academic.0.endYear',        ac: [],                              rx: [/^(graduation[\s_-]?year|pass(ing)?[\s_-]?year|year[\s_-]?of[\s_-]?passing)$/i] },
+    { key: 'academic.0.institution',
+      ac: [],
+      rx: [/^(university|college|institution|school|institute)$/i] },
+    { key: 'academic.0.degree',
+      ac: [],
+      rx: [/^(degree|qualification|education[\s_-]?level|highest[\s_-]?education)$/i] },
+    { key: 'academic.0.field',
+      ac: [],
+      rx: [/^(field[\s_-]?of[\s_-]?study|major|course|discipline|subject)$/i] },
+    { key: 'academic.0.gpa',
+      ac: [],
+      rx: [/^(gpa|cgpa|grade|percentage)$/i] },
+    { key: 'academic.0.endYear',
+      ac: [],
+      rx: [/^(graduation[\s_-]?year|pass(ing)?[\s_-]?year|year[\s_-]?of[\s_-]?passing)$/i] },
     // Media / social
-    { key: 'media.linkedin',            ac: [],                              rx: [/^(linkedin|linkedin[\s_-]?(url|profile|link))$/i] },
-    { key: 'media.github',              ac: [],                              rx: [/^(github|github[\s_-]?(url|profile|link))$/i] },
-    { key: 'media.twitter',             ac: [],                              rx: [/^(twitter|twitter[\s_-]?(handle|url)|x[\s_-]?handle)$/i] },
-    { key: 'media.portfolio',           ac: ['url'],                         rx: [/^(portfolio|personal[\s_-]?website|website|personal[\s_-]?url|blog[\s_-]?url)$/i] },
+    { key: 'media.linkedin',
+      ac: [],
+      rx: [/^(linkedin([\s_-]?(url|profile|link))?)$/i] },
+    { key: 'media.github',
+      ac: [],
+      rx: [/^(github([\s_-]?(url|profile|link))?)$/i] },
+    { key: 'media.twitter',
+      ac: [],
+      rx: [/^(twitter([\s_-]?(handle|url))?|x[\s_-]?handle)$/i] },
+    { key: 'media.portfolio',
+      ac: ['url'],
+      rx: [/^(portfolio|web[\s_-]?site|website([\s_-]?(url|address))?|personal[\s_-]?url|blog[\s_-]?url)$/i] },
   ];
+
+  // ─── Token normalization ──────────────────────────────────────────────────
+  // Produces multiple variants from a raw signal so regexes can match across
+  // naming conventions: "YourFirstName", "first_name", "First Name:", etc.
+
+  // Common qualifier prefixes that don't change the field's meaning
+  const RE_PREFIX = /^(your|the|enter|please|provide|my|home|work|office|cell|mobile|billing|shipping|personal|business|primary|secondary|alternate|alternative|user|txt|inp|fld|str|field)\s+/i;
+  // Trailing punctuation, asterisks, requirement markers
+  const RE_SUFFIX = /[\s:*?![\]()]+$|[\s_-]*\(?(required|optional|mandatory)\)?$/i;
+
+  function tokenVariants(raw) {
+    const out = new Set();
+    const t   = raw.trim();
+    if (!t) return [];
+
+    // Raw lowercased
+    out.add(t.toLowerCase());
+
+    // Split camelCase and normalize all separators to spaces
+    const split = t
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .replace(/[\s_\-.]+/g, ' ')
+      .toLowerCase()
+      .trim();
+    out.add(split);
+
+    // Strip trailing punctuation / markers
+    const clean = split.replace(RE_SUFFIX, '').trim();
+    out.add(clean);
+
+    // Strip leading qualifier
+    const stripped = clean.replace(RE_PREFIX, '').trim();
+    out.add(stripped);
+
+    return [...out].filter(Boolean);
+  }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -54,30 +146,61 @@
   }
 
   function labelText(el) {
+    // 1. <label for="id">
     if (el.id) {
       try {
         const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
         if (lbl) return lbl.textContent.trim();
-      } catch (_) { /* CSS.escape may fail on exotic ids */ }
+      } catch (_) {}
     }
+    // 2. Wrapped in <label>
     const nearest = el.closest('label');
     if (nearest) return nearest.textContent.trim();
+    // 3. aria-labelledby (may be space-separated list of ids)
     const ariaId = el.getAttribute('aria-labelledby');
-    if (ariaId) return document.getElementById(ariaId)?.textContent.trim() ?? '';
-    return el.getAttribute('aria-label') ?? '';
+    if (ariaId) {
+      const t = ariaId.split(/\s+/)
+        .map(id => document.getElementById(id)?.textContent ?? '')
+        .join(' ').trim();
+      if (t) return t;
+    }
+    // 4. aria-label
+    const ariaLbl = el.getAttribute('aria-label');
+    if (ariaLbl) return ariaLbl.trim();
+    // 5. Adjacent <td>/<th> — handles table-based forms (e.g. RoboForm test page)
+    const cell = el.closest('td, th');
+    if (cell) {
+      const prev = cell.previousElementSibling;
+      if (prev && /^t[dh]$/i.test(prev.tagName)) return prev.textContent.trim();
+      // Fall back to first cell in the same row
+      const firstCell = cell.closest('tr')?.querySelector('td, th');
+      if (firstCell && firstCell !== cell) return firstCell.textContent.trim();
+    }
+    // 6. Preceding sibling element that looks like a label
+    const prevEl = el.previousElementSibling;
+    if (prevEl && /^(label|span|div|p|strong|b|legend|dt)$/i.test(prevEl.tagName)) {
+      return prevEl.textContent.trim();
+    }
+    return '';
   }
 
   function matchRule(el) {
-    const ac   = (el.getAttribute('autocomplete') ?? '').toLowerCase().trim();
-    const name = (el.name       ?? '').trim();
-    const id   = (el.id         ?? '').trim();
+    // Autocomplete: split on spaces to handle e.g. "shipping given-name"
+    const acTokens = (el.getAttribute('autocomplete') ?? '')
+      .toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+    const name = (el.name        ?? '').trim();
+    const id   = (el.id          ?? '').trim();
     const ph   = (el.placeholder ?? '').trim();
     const lbl  = labelText(el);
-    const tokens = [name, id, ph, lbl].filter(Boolean);
+
+    const variants = [name, id, ph, lbl]
+      .filter(Boolean)
+      .flatMap(tokenVariants);
 
     for (const rule of RULES) {
-      if (ac && rule.ac.includes(ac)) return rule.key;
-      for (const tok of tokens) {
+      if (acTokens.length && rule.ac.some(a => acTokens.includes(a))) return rule.key;
+      for (const tok of variants) {
         for (const rx of rule.rx) {
           if (rx.test(tok)) return rule.key;
         }
@@ -184,11 +307,13 @@
 
     const fileSelector = 'input[type=file]';
 
-    let filled = 0;
+    let filled  = 0;
+    let matched = 0;
 
     for (const el of document.querySelectorAll(selector)) {
       const key   = matchRule(el);
       const value = key ? dig(profile, key) : null;
+      if (key) matched++;
       if (value && fillElement(el, value)) filled++;
     }
 
@@ -196,6 +321,7 @@
     for (const el of document.querySelectorAll(fileSelector)) {
       const key = matchRule(el);
       if (!key) continue;
+      matched++;
       const value = dig(profile, key);
       if (value) {
         await injectImage(el, value);
@@ -203,12 +329,12 @@
       }
     }
 
-    showToast(
-      filled
-        ? `InstaForm filled ${filled} field${filled !== 1 ? 's' : ''} ✓`
-        : 'No matching fields found on this page.',
-      filled ? 'success' : 'warn'
-    );
+    const msg = filled
+      ? `InstaForm filled ${filled} field${filled !== 1 ? 's' : ''} ✓`
+      : matched
+        ? 'Fields matched but profile data is empty — open InstaForm to fill in your details.'
+        : 'No matching fields found on this page.';
+    showToast(msg, filled ? 'success' : 'warn');
   };
 
   window.__instaformRun();
