@@ -163,7 +163,14 @@
   // ─── Main fill routine ────────────────────────────────────────────────────
 
   window.__instaformRun = async function () {
-    const { profile } = await chrome.storage.local.get('profile');
+    // Support both multi-profile format (v2) and legacy single-profile format (v1)
+    const data = await chrome.storage.local.get(['profiles', 'activeProfileId', 'profile']);
+    let profile = null;
+    if (data.profiles?.length) {
+      profile = data.profiles.find(p => p.id === data.activeProfileId) ?? data.profiles[0];
+    } else if (data.profile) {
+      profile = data.profile;
+    }
     if (!profile) {
       showToast('No profile saved yet — click the InstaForm icon to set one up.', 'warn');
       return;

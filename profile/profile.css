@@ -42,10 +42,11 @@ html, body {
   height: var(--topbar-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 24px;
+  gap: 16px;
   z-index: 100;
 }
 
@@ -80,6 +81,7 @@ html, body {
 .topbar-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 14px;
 }
 
@@ -471,85 +473,111 @@ select option { background: var(--surface2); }
 
 .remove-image { align-self: flex-start; }
 
-/* ── Auth overlay ─────────────────────────────────────────────────────── */
-.signin-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
+/* ── Profile selector (topbar center) ────────────────────────────────── */
+.topbar-center { flex: 1; display: flex; justify-content: center; }
+
+.ps-wrap { position: relative; }
+
+.ps-trigger {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius); color: var(--text);
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  white-space: nowrap; max-width: 260px;
+}
+.ps-trigger:hover { border-color: var(--accent); background: var(--surface3); }
+#ps-active-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-chevron { color: var(--text-xs); transition: transform .15s; flex-shrink: 0; }
+.ps-wrap.open .ps-chevron { transform: rotate(180deg); }
+
+.ps-dropdown {
+  position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  min-width: 240px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius); z-index: 200;
+  box-shadow: 0 8px 28px rgba(0,0,0,.5);
+  overflow: hidden;
 }
 
-.signin-card {
-  width: 400px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+.ps-list { max-height: 260px; overflow-y: auto; padding: 4px; }
+
+.ps-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 9px; border-radius: 5px; cursor: pointer;
+  transition: background .12s;
+}
+.ps-item:hover { background: var(--surface3); }
+.ps-item.active { background: rgba(79,70,229,.18); }
+
+.ps-item-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: transparent; border: 1.5px solid var(--border2);
+}
+.ps-item.active .ps-item-dot { background: var(--accent-lt); border-color: var(--accent-lt); }
+
+.ps-item-name {
+  flex: 1; font-size: 12px; font-weight: 500;
+  color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ps-item.active .ps-item-name { color: var(--text); }
+
+.ps-item-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+.ps-item:hover .ps-item-actions { opacity: 1; }
+.ps-item.renaming .ps-item-actions { opacity: 1; }
+
+.ps-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: none; border-radius: 4px;
+  background: none; color: var(--text-xs); cursor: pointer;
+  transition: background .12s, color .12s; flex-shrink: 0;
+}
+.ps-icon-btn:hover { background: var(--surface); color: var(--text); }
+.ps-icon-btn.danger:hover { color: var(--danger); background: rgba(248,113,113,.12); }
+
+.ps-item.renaming .ps-item-name { display: none; }
+.ps-item .ps-rename-input { display: none; }
+.ps-item.renaming .ps-rename-input {
+  display: block; flex: 1;
+  background: transparent; border: none; border-bottom: 1px solid var(--accent);
+  color: var(--text); font-size: 12px; font-weight: 500; font-family: inherit;
+  outline: none; padding: 0 2px; min-width: 0;
 }
 
-.signin-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
+.ps-footer { border-top: 1px solid var(--border); padding: 4px; }
 
-.signin-heading {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -.3px;
-  color: var(--text);
+.ps-new-btn {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; padding: 7px 9px;
+  background: none; border: none; border-radius: 5px;
+  color: var(--accent-lt); font-size: 12px; font-weight: 500; font-family: inherit;
+  cursor: pointer; transition: background .12s;
 }
+.ps-new-btn:hover { background: var(--surface3); }
 
-.signin-body {
-  font-size: 13px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  max-width: 280px;
-}
+.ps-new-form { display: flex; align-items: center; gap: 6px; padding: 6px 9px; }
 
-.signin-path {
-  font-family: monospace;
-  font-size: 11px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 5px 10px;
-  color: var(--text-dim);
-  display: block;
+.ps-new-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 4px; color: var(--text); font-size: 12px; font-family: inherit;
+  padding: 5px 8px; outline: none; min-width: 0;
 }
+.ps-new-input:focus { border-color: var(--accent); }
 
-.btn-outline {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  font-size: 13px;
-  font-weight: 500;
-  font-family: inherit;
-  padding: 8px 20px;
-  cursor: pointer;
-  transition: border-color .15s, color .15s;
-  margin-top: 4px;
+.ps-new-create {
+  padding: 4px 10px; background: var(--accent); border: none; border-radius: 4px;
+  color: #fff; font-size: 12px; font-weight: 600; font-family: inherit;
+  cursor: pointer; white-space: nowrap; transition: background .15s; flex-shrink: 0;
 }
-.btn-outline:hover { border-color: var(--accent-lt); color: var(--text); }
+.ps-new-create:hover { background: var(--accent-h); }
 
-.spinner {
-  width: 24px; height: 24px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--accent-lt);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
+.ps-new-cancel {
+  padding: 4px 8px; background: none; border: none;
+  color: var(--text-xs); font-size: 12px; font-family: inherit;
+  cursor: pointer; transition: color .15s; flex-shrink: 0;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+.ps-new-cancel:hover { color: var(--text); }
 
 /* ── Sidebar: data & account ──────────────────────────────────────────── */
 .sidebar-section-label {
@@ -591,26 +619,6 @@ select option { background: var(--surface2); }
   text-decoration: none;
 }
 .btn-data:hover { background: var(--border); color: var(--text); }
-
-.sidebar-account {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px 16px;
-  border-top: 1px solid var(--border);
-  margin-top: 10px;
-}
-
-.account-chrome-icon { color: var(--text-xs); flex-shrink: 0; }
-
-.account-email {
-  font-size: 11px;
-  color: var(--text-xs);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
 
 /* ── Import success / error toast ─────────────────────────────────────── */
 .import-toast {

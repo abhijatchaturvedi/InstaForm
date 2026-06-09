@@ -22,14 +22,15 @@ InstaForm is a Chrome extension that stores your personal profile in a local vau
 
 ## Features
 
-- **Google sign-in gate** — identifies you via your Google account; profile data stays 100% local
+- **No sign-in required** — open and use immediately; all data stays 100% local on your device
+- **Multiple named profiles** — create, switch, rename, and delete profiles; ideal for separate work/personal identities
 - **Full-tab profile editor** — opens in a new tab with a sidebar layout; no cramped popup form
-- **Four profile sections** — Identity, Address, Work, and Online presence
+- **Five profile sections** — Identity, Address, Work, Education, and Online presence
 - **Smart field detection** — matches fields by `autocomplete` attribute, `name`/`id`, label text, and placeholder
 - **React / Vue / Angular aware** — dispatches native `input` + `change` events so framework forms register the fill
 - **Image injection** — injects stored profile photo and signature into `<input type="file">` fields via the `DataTransfer` API
 - **Multiple work / education entries** — add as many jobs and degrees as you need
-- **Export & import** — back up your profile as a JSON file and restore it after reinstalls or updates
+- **Export & import** — back up any profile as a JSON file and restore it after reinstalls or updates
 - **Keyboard shortcut** — `Ctrl+Shift+F` (configurable) fills the page without opening the popup
 
 ## Installation
@@ -42,15 +43,13 @@ InstaForm is a Chrome extension that stores your personal profile in a local vau
 4. Click **Load unpacked** and select the `InstaForm/` folder
 5. The lightning bolt icon appears in your toolbar — pin it for easy access
 
-> **Prerequisite:** You must be signed in to Chrome (`Chrome menu → Settings → Sign in to Chrome`). InstaForm reads your Chrome profile to protect access to your vault — no OAuth app or setup required.
-
 ## Usage
 
 ### First-time setup
 
-1. Click the **InstaForm** icon — it reads your Chrome profile automatically
-2. The profile editor opens in a new tab — your email is pre-filled
-3. Fill in your details and click **Save Profile** (or press `Ctrl+S`)
+1. Click the **InstaForm** icon in the toolbar
+2. Click **Manage Profiles** — the profile editor opens in a new tab
+3. Fill in your details and click **Save**
 
 ### Filling a form
 
@@ -63,26 +62,35 @@ A toast notification confirms how many fields were matched and filled.
 
 > **Changing the shortcut** — go to `chrome://extensions/shortcuts` and remap *"Fill form on current page"* to any key combination you prefer.
 
+## Multiple profiles
+
+Use the profile switcher in the topbar of the profile editor (or the popup) to manage profiles:
+
+| Action | How |
+|---|---|
+| **Switch** | Click the active profile name → pick from the list |
+| **Create** | Click `+ New Profile` in the switcher dropdown |
+| **Rename** | Hover a profile → click the pencil icon → type and press Enter |
+| **Delete** | Hover a profile → click the trash icon (blocked on the last remaining profile) |
+
 ## Export & import
 
-Use Export/Import to back up your profile before updating or reinstalling the extension, or to move it between machines.
+Use Export/Import to back up a profile before updating or reinstalling the extension, or to move data between machines.
 
 | Action | Where | What happens |
 |---|---|---|
-| **Export** | Profile page → sidebar → **Export** | Downloads `instaform-profile-YYYY-MM-DD.json` |
-| **Import** | Profile page → sidebar → **Import** | Opens file picker, loads the JSON, reloads the form |
+| **Export** | Profile page → sidebar → **Export** | Downloads `instaform_<name>.json` for the active profile |
+| **Import** | Profile page → sidebar → **Import** | Opens file picker; adds as a new profile or updates existing if ID matches |
 
 The exported file is a plain JSON document with a version header:
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "exportedAt": "2026-06-09T12:00:00.000Z",
   "profile": { ... }
 }
 ```
-
-> Importing overwrites the current profile immediately. Export first if you want a backup of what you had.
 
 ## How field matching works
 
@@ -99,7 +107,7 @@ The ruleset covers common naming conventions including camelCase, snake_case, ke
 
 ## Profile schema
 
-Data is stored as a single JSON object under the key `profile` in `chrome.storage.local`:
+Profiles are stored as an array under the key `profiles` in `chrome.storage.local`. Each profile follows this shape:
 
 ```jsonc
 {
@@ -154,18 +162,18 @@ Data is stored as a single JSON object under the key `profile` in `chrome.storag
 
 ```
 InstaForm/
-├── manifest.json        Chrome MV3 manifest (identity permission + oauth2 config)
-├── auth.js              Shared Google OAuth module (signIn / signOut / getStoredUser)
+├── manifest.json        Chrome MV3 manifest
+├── storage.js           Shared multi-profile helpers + v1→v2 migration
 ├── background.js        Service worker — handles Ctrl+Shift+F shortcut
 ├── content.js           Form-filler content script (injected on demand)
 ├── popup/
-│   ├── popup.html       Minimal launcher — sign-in gate + fill button
+│   ├── popup.html       Minimal launcher — profile switcher + fill button
 │   ├── popup.css        Popup styles
-│   └── popup.js         Auth check, fill trigger, open-profile-tab
+│   └── popup.js         Profile switcher, fill trigger, open-profile-tab
 ├── profile/
 │   ├── profile.html     Full-tab profile editor with sidebar layout
 │   ├── profile.css      Full-page dark styles
-│   └── profile.js       Auth gate, form I/O, export/import, scroll spy
+│   └── profile.js       Profile selector, form I/O, export/import, scroll spy
 ├── icons/
 │   ├── icon.svg         Source SVG icon
 │   └── icon{16,32,48,128}.png  Generated PNGs
@@ -176,11 +184,11 @@ InstaForm/
 
 **Key design decisions:**
 
-- **Auth via `chrome.identity.getProfileUserInfo`** — reads the signed-in Chrome account directly; no OAuth app, no client_id, no consent screen. `getStoredUser()` caches the result in `chrome.storage.local` so subsequent checks are instant
-- **Profile pre-population** — on first open, the Chrome account email is written into the profile automatically
+- **No authentication** — profiles live entirely in `chrome.storage.local`; nothing ever leaves the device
+- **Multi-profile storage** — `storage.js` holds all profiles in an array with an `activeProfileId` pointer; `loadAllProfiles()` transparently migrates the old single-profile format on first load
 - **On-demand content script injection** — injected fresh per trigger; `window.__instaformActive` guards against double-execution
 - **Native value setter** — React/Vue/Angular intercept `element.value = ...`; InstaForm uses `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set` to bypass the override, then fires synthetic events
-- **Versioned export format** — the JSON envelope carries a `version` field so future migrations can be handled without data loss
+- **Versioned export format** — the JSON envelope carries a `version` field (`2.0.0`) so future migrations can be handled without data loss
 - **No build step** — plain HTML/CSS/JS, no bundler or framework
 
 ## Known limitations

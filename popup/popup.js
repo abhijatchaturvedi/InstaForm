@@ -1,99 +1,69 @@
 'use strict';
 
-// auth.js is loaded before this script
+// storage.js is loaded before this script
 const $ = (id) => document.getElementById(id);
 
-function showScreen(name) {
-  ['auth', 'main'].forEach(s =>
-    $(`screen-${s}`).classList.toggle('hidden', s !== name)
-  );
+let _profiles = [];
+let _activeId = '';
+
+// ── Build profile list in dropdown ────────────────────────────────────────
+
+function renderDropdown() {
+  const list = $('pd-list');
+  list.innerHTML = '';
+
+  _profiles.forEach(profile => {
+    const item = document.createElement('div');
+    item.className = 'pd-item' + (profile.id === _activeId ? ' active' : '');
+    item.innerHTML = `
+      <div class="pd-dot"></div>
+      <span class="pd-item-name" title="${escAttr(profile.name)}">${esc(profile.name)}</span>`;
+
+    item.addEventListener('click', () => switchProfile(profile.id));
+    list.appendChild(item);
+  });
 }
 
-function showAuthError() {
-  $('auth-loading').classList.add('hidden');
-  $('auth-error').classList.remove('hidden');
+function esc(v)     { return (v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function escAttr(v) { return (v ?? '').replace(/"/g,'&quot;'); }
+
+// ── Profile switching ─────────────────────────────────────────────────────
+
+async function switchProfile(id) {
+  _activeId = id;
+  await saveAllProfiles(_profiles, _activeId);   // from storage.js
+  $('active-name').textContent = _profiles.find(p => p.id === id)?.name ?? '';
+  renderDropdown();
+  closeDropdown();
 }
 
-// ── Populate chip ─────────────────────────────────────────────────────────
+// ── Dropdown toggle ───────────────────────────────────────────────────────
 
-async function populateChip(user) {
-  $('chip-email').textContent = user.email;
-
-  // Try to show the profile name if one is saved
-  const { profile } = await chrome.storage.local.get('profile');
-  const name = profile?.personal?.fullName
-    || [profile?.personal?.firstName, profile?.personal?.lastName].filter(Boolean).join(' ')
-    || '';
-
-  $('chip-name').textContent = name || user.email.split('@')[0];
-
-  const avatar = $('chip-avatar');
-  avatar.innerHTML = '';
-  if (profile?.media?.photo) {
-    const img = document.createElement('img');
-    img.src = profile.media.photo;
-    avatar.appendChild(img);
-  } else {
-    const initials = (name || user.email)
-      .split(/[\s@.]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    avatar.textContent = initials;
-  }
+function openDropdown() {
+  $('switcher-dropdown').classList.remove('hidden');
+  $('switcher-btn').classList.add('open');
 }
 
-// ── Auth flow (automatic — no user action needed) ─────────────────────────
-
-async function init() {
-  // Fast path: already connected
-  let user = await getStoredUser();           // from auth.js
-
-  if (!user) {
-    // First open or cleared — try to read Chrome profile
-    try {
-      user = await connectChromeProfile();    // from auth.js
-    } catch {
-      showScreen('auth');
-      showAuthError();
-      return;
-    }
-  }
-
-  // Seed profile on first use
-  const { profile } = await chrome.storage.local.get('profile');
-  if (!profile) {
-    await chrome.storage.local.set({
-      profile: {
-        personal: {
-          firstName: '', lastName: '', fullName: '',
-          email: user.email,
-          phone: '', dob: '', gender: '', nationality: '',
-          address: { street: '', city: '', state: '', zip: '', country: '' },
-        },
-        professional: [], academic: [],
-        media: { linkedin: '', github: '', twitter: '', portfolio: '', photo: '', signature: '' },
-      },
-    });
-    // First-time: open profile page so user can fill in the rest
-    chrome.tabs.create({ url: chrome.runtime.getURL('profile/profile.html') });
-    window.close();
-    return;
-  }
-
-  await populateChip(user);
-  showScreen('main');
+function closeDropdown() {
+  $('switcher-dropdown').classList.add('hidden');
+  $('switcher-btn').classList.remove('open');
 }
 
-// ── Retry button (shown only if Chrome has no signed-in account) ──────────
+$('switcher-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('switcher-dropdown').classList.contains('hidden') ? openDropdown() : closeDropdown();
+});
 
-$('retry-btn').addEventListener('click', async () => {
-  $('auth-error').classList.add('hidden');
-  $('auth-loading').classList.remove('hidden');
+document.addEventListener('click', () => closeDropdown());
+$('switcher-dropdown').addEventListener('click', e => e.stopPropagation());
 
-  try {
-    await connectChromeProfile();
-    init();
-  } catch {
-    showAuthError();
-  }
+// ── New profile ───────────────────────────────────────────────────────────
+
+$('pd-new-btn').addEventListener('click', async () => {
+  closeDropdown();
+  // Open the profile page where the user can create and name a new profile
+  chrome.tabs.create({ url: chrome.runtime.getURL('profile/profile.html?new=1') });
+  window.close();
 });
 
 // ── Fill this page ────────────────────────────────────────────────────────
@@ -109,7 +79,7 @@ $('fill-btn').addEventListener('click', async () => {
   window.close();
 });
 
-// ── Edit profile ──────────────────────────────────────────────────────────
+// ── Manage profiles ───────────────────────────────────────────────────────
 
 $('edit-btn').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('profile/profile.html') });
@@ -117,4 +87,16 @@ $('edit-btn').addEventListener('click', () => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────
+
+async function init() {
+  const { profiles, activeProfileId } = await loadAllProfiles();  // from storage.js
+  _profiles = profiles;
+  _activeId = activeProfileId;
+
+  const active = _profiles.find(p => p.id === _activeId) ?? _profiles[0];
+  $('active-name').textContent = active?.name ?? 'My Profile';
+
+  renderDropdown();
+}
+
 init();
