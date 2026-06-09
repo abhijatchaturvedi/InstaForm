@@ -9,7 +9,7 @@
 
 [![License: PolyForm NC](https://img.shields.io/badge/License-PolyForm%20NC%201.0-crimson?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4f46e5?style=flat-square&logo=googlechrome&logoColor=white)](manifest.json)
-[![Version](https://img.shields.io/badge/Version-1.0.0-818cf8?style=flat-square)](manifest.json)
+[![Version](https://img.shields.io/badge/Version-2.0.0-818cf8?style=flat-square)](manifest.json)
 [![Platform](https://img.shields.io/badge/Platform-Chrome-yellow?style=flat-square&logo=googlechrome&logoColor=white)]()
 [![Vanilla JS](https://img.shields.io/badge/Built%20with-Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-34d399?style=flat-square)]()
