@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "InstaForm",
+  "version": "1.0.0",
+  "description": "Intelligently fill web forms from your personal profile vault.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "32":  "icons/icon32.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "InstaForm"
+  },
+  "icons": {
+    "16":  "icons/icon16.png",
+    "32":  "icons/icon32.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "fill-form": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "MacCtrl+Shift+F"
+      },
+      "description": "Fill form on current page"
+    }
+  }
+}
