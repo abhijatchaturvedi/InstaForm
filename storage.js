@@ -21,6 +21,7 @@ function emptyProfileData() {
     personal: {
       firstName:'', lastName:'', fullName:'', email:'', phone:'',
       dob:'', gender:'', nationality:'',
+      fatherName:'', motherName:'',
       address:{ street:'', city:'', state:'', zip:'', country:'' },
     },
     professional: [],

@@ -179,6 +179,7 @@ async function switchToProfile(id) {
 
 const PERSONAL_FIELDS = [
   'firstName','lastName','fullName','email','phone','dob','gender','nationality',
+  'fatherName','motherName',
 ];
 const ADDRESS_FIELDS = ['street','city','state','zip','country'];
 const MEDIA_FIELDS   = ['linkedin','github','twitter','portfolio'];

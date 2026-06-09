@@ -38,6 +38,12 @@
     { key: 'personal.nationality',
       ac: [],
       rx: [/^(nationality|citizenship)$/i] },
+    { key: 'personal.fatherName',
+      ac: [],
+      rx: [/^(father[\s_-]?(name|s[\s_-]?name)|dad[\s_-]?name|paternal[\s_-]?name)$/i] },
+    { key: 'personal.motherName',
+      ac: [],
+      rx: [/^(mother[\s_-]?(name|s[\s_-]?name)|mom[\s_-]?name|maternal[\s_-]?name)$/i] },
     // Address
     { key: 'personal.address.street',
       ac: ['street-address', 'address-line1'],
@@ -104,8 +110,8 @@
 
   // Common qualifier prefixes that don't change the field's meaning
   const RE_PREFIX = /^(your|the|enter|please|provide|my|home|work|office|cell|mobile|billing|shipping|personal|business|primary|secondary|alternate|alternative|user|txt|inp|fld|str|field)\s+/i;
-  // Trailing punctuation, asterisks, requirement markers
-  const RE_SUFFIX = /[\s:*?![\]()]+$|[\s_-]*\(?(required|optional|mandatory)\)?$/i;
+  // Trailing punctuation, requirement markers, and common widget-type suffixes
+  const RE_SUFFIX = /[\s:*?![\]()]+$|[\s_-]*\(?(required|optional|mandatory)\)?$|[\s_-]+(txt|text|input|inp|field|fld|box|ctrl|control|val|value|wrap|container|group)$/i;
 
   function tokenVariants(raw) {
     const out = new Set();
@@ -285,6 +291,8 @@
 
   // ─── Main fill routine ────────────────────────────────────────────────────
 
+  const isMainFrame = (window === window.top);
+
   window.__instaformRun = async function () {
     // Support both multi-profile format (v2) and legacy single-profile format (v1)
     const data = await chrome.storage.local.get(['profiles', 'activeProfileId', 'profile']);
@@ -310,7 +318,9 @@
     let filled  = 0;
     let matched = 0;
 
-    for (const el of document.querySelectorAll(selector)) {
+    const allEls = [...document.querySelectorAll(selector)];
+
+    for (const el of allEls) {
       const key   = matchRule(el);
       const value = key ? dig(profile, key) : null;
       if (key) matched++;
@@ -329,12 +339,31 @@
       }
     }
 
-    const msg = filled
-      ? `InstaForm filled ${filled} field${filled !== 1 ? 's' : ''} ✓`
-      : matched
-        ? 'Fields matched but profile data is empty — open InstaForm to fill in your details.'
-        : 'No matching fields found on this page.';
-    showToast(msg, filled ? 'success' : 'warn');
+    // Debug info in console — open DevTools → Console to see field details
+    console.group('InstaForm debug');
+    console.log(`Fields found by selector: ${allEls.length}`);
+    allEls.forEach(el => {
+      const key = matchRule(el);
+      const lbl = labelText(el);
+      console.log(
+        `[${key ?? 'NO MATCH'}]`,
+        el.tagName.toLowerCase(),
+        `name="${el.name}" id="${el.id}"`,
+        `ac="${el.getAttribute('autocomplete') ?? ''}"`,
+        `label="${lbl}"`,
+        `variants:`, [el.name, el.id, el.placeholder ?? '', lbl].filter(Boolean).flatMap(tokenVariants)
+      );
+    });
+    console.groupEnd();
+
+    if (filled > 0) {
+      showToast(`InstaForm filled ${filled} field${filled !== 1 ? 's' : ''} ✓`, 'success');
+    } else if (matched > 0) {
+      showToast('Fields matched but profile data is empty — open InstaForm to fill in your details.', 'warn');
+    } else if (isMainFrame) {
+      // Only the main frame reports "nothing found" — sub-frames stay silent to avoid spam
+      showToast(`No matches (${allEls.length} field${allEls.length !== 1 ? 's' : ''} found on this frame). Check DevTools console.`, 'warn');
+    }
   };
 
   window.__instaformRun();
