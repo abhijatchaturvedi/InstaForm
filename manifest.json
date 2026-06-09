@@ -6,9 +6,14 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "identity"
   ],
   "host_permissions": ["<all_urls>"],
+  "oauth2": {
+    "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": ["openid", "email", "profile"]
+  },
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -25,6 +30,7 @@
     "48":  "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "options_page": "profile/profile.html",
   "background": {
     "service_worker": "background.js"
   },

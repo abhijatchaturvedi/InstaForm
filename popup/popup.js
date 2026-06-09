@@ -1,336 +1,132 @@
 'use strict';
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-
+// auth.js is loaded before this script (see popup.html)
 const $ = (id) => document.getElementById(id);
-const val = (id) => $(id)?.value.trim() ?? '';
 
-function setStatus(msg, ok = true) {
-  const el = $('save-status');
-  el.textContent = msg;
-  el.style.color = ok ? 'var(--success)' : 'var(--warn)';
-  el.style.opacity = '1';
-  setTimeout(() => { el.style.opacity = '0'; }, 2500);
-}
+// ── Screen switching ──────────────────────────────────────────────────────
 
-// ── Tab switching ─────────────────────────────────────────────────────────
-
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    $(`tab-${btn.dataset.tab}`).classList.add('active');
-  });
-});
-
-// ── Dynamic entry cards ───────────────────────────────────────────────────
-
-function makeProfCard(data = {}, index) {
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.dataset.index = index;
-
-  const endDateDisabled = data.current ? 'disabled' : '';
-  card.innerHTML = `
-    <div class="entry-header">
-      <span class="entry-label">Job ${index + 1}</span>
-      <button class="remove-btn" title="Remove">×</button>
-    </div>
-    <div class="form-row">
-      <div class="field"><label>Company</label>
-        <input type="text" data-field="company" value="${esc(data.company)}" placeholder="Acme Corp" /></div>
-      <div class="field"><label>Job Title</label>
-        <input type="text" data-field="title" value="${esc(data.title)}" placeholder="Software Engineer" /></div>
-    </div>
-    <div class="form-row">
-      <div class="field"><label>Start Date</label>
-        <input type="month" data-field="startDate" value="${esc(data.startDate)}" /></div>
-      <div class="field"><label>End Date</label>
-        <input type="month" data-field="endDate" value="${esc(data.endDate)}" ${endDateDisabled} /></div>
-    </div>
-    <div class="current-row">
-      <input type="checkbox" id="cur-${index}" data-field="current" ${data.current ? 'checked' : ''} />
-      <label for="cur-${index}">Currently working here</label>
-    </div>`;
-
-  card.querySelector('.remove-btn').addEventListener('click', () => {
-    card.remove();
-    reindexCards('pro-entries', 'Job');
-  });
-
-  const curChk = card.querySelector('[data-field=current]');
-  const endInput = card.querySelector('[data-field=endDate]');
-  curChk.addEventListener('change', () => {
-    endInput.disabled = curChk.checked;
-    if (curChk.checked) endInput.value = '';
-  });
-
-  return card;
-}
-
-function makeEduCard(data = {}, index) {
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.dataset.index = index;
-  card.innerHTML = `
-    <div class="entry-header">
-      <span class="entry-label">Degree ${index + 1}</span>
-      <button class="remove-btn" title="Remove">×</button>
-    </div>
-    <div class="field"><label>Institution</label>
-      <input type="text" data-field="institution" value="${esc(data.institution)}" placeholder="MIT" /></div>
-    <div class="form-row">
-      <div class="field"><label>Degree</label>
-        <input type="text" data-field="degree" value="${esc(data.degree)}" placeholder="B.S. Computer Science" /></div>
-      <div class="field"><label>Field of Study</label>
-        <input type="text" data-field="field" value="${esc(data.field)}" placeholder="Computer Science" /></div>
-    </div>
-    <div class="form-row">
-      <div class="field"><label>Start Year</label>
-        <input type="number" data-field="startYear" value="${esc(data.startYear)}" placeholder="2018" min="1950" max="2040" /></div>
-      <div class="field"><label>End Year</label>
-        <input type="number" data-field="endYear" value="${esc(data.endYear)}" placeholder="2022" min="1950" max="2040" /></div>
-    </div>
-    <div class="field"><label>GPA / Grade</label>
-      <input type="text" data-field="gpa" value="${esc(data.gpa)}" placeholder="3.8 / 4.0" /></div>`;
-
-  card.querySelector('.remove-btn').addEventListener('click', () => {
-    card.remove();
-    reindexCards('edu-entries', 'Degree');
-  });
-
-  return card;
-}
-
-function esc(v) {
-  return (v ?? '').toString().replace(/"/g, '&quot;').replace(/</g, '&lt;');
-}
-
-function reindexCards(containerId, label) {
-  $$(containerId, '.entry-card').forEach((card, i) => {
-    card.dataset.index = i;
-    card.querySelector('.entry-label').textContent = `${label} ${i + 1}`;
+function showScreen(name) {
+  ['signin', 'main'].forEach(s => {
+    $(`screen-${s}`).classList.toggle('hidden', s !== name);
   });
 }
 
-function $$(parentId, sel) {
-  return Array.from($(parentId).querySelectorAll(sel));
-}
+// ── Populate chip from stored user ────────────────────────────────────────
 
-function collectEntries(containerId, fields) {
-  return $$(`${containerId}`, '.entry-card').map(card => {
-    const obj = {};
-    fields.forEach(f => {
-      const el = card.querySelector(`[data-field="${f}"]`);
-      if (!el) return;
-      obj[f] = el.type === 'checkbox' ? el.checked : el.value.trim();
-    });
-    return obj;
-  });
-}
+function populateChip(user) {
+  $('chip-name').textContent  = user.name  || user.email;
+  $('chip-email').textContent = user.email || '';
 
-// ── Add-entry buttons ─────────────────────────────────────────────────────
-
-document.querySelectorAll('.add-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.type === 'pro') {
-      const index = $$('pro-entries', '.entry-card').length;
-      $('pro-entries').appendChild(makeProfCard({}, index));
-    } else {
-      const index = $$('edu-entries', '.entry-card').length;
-      $('edu-entries').appendChild(makeEduCard({}, index));
-    }
-  });
-});
-
-// ── Image upload helpers ──────────────────────────────────────────────────
-
-function setupImageUpload({ fileInputId, previewId, placeholderId, clearBtnId }) {
-  const fileInput  = $(fileInputId);
-  const preview    = $(previewId);
-  const placeholder = $(placeholderId);
-  const clearBtn   = $(clearBtnId);
-
-  let storedBase64 = '';
-
-  function showPreview(src) {
-    preview.src = src;
-    preview.classList.remove('hidden');
-    placeholder.classList.add('hidden');
-    clearBtn.style.display = 'inline-flex';
-    storedBase64 = src;
+  const avatar = $('chip-avatar');
+  avatar.innerHTML = '';
+  if (user.photo) {
+    const img = document.createElement('img');
+    img.src = user.photo;
+    img.alt = user.name;
+    avatar.appendChild(img);
+  } else {
+    avatar.textContent = (user.name || user.email)
+      .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
-
-  function clearPreview() {
-    preview.src = '';
-    preview.classList.add('hidden');
-    placeholder.classList.remove('hidden');
-    clearBtn.style.display = 'none';
-    fileInput.value = '';
-    storedBase64 = '';
-  }
-
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => showPreview(e.target.result);
-    reader.readAsDataURL(file);
-  });
-
-  clearBtn.addEventListener('click', () => clearPreview());
-
-  return {
-    load: (src) => { if (src) showPreview(src); else clearPreview(); },
-    get:  () => storedBase64,
-  };
 }
 
-const photoCtrl = setupImageUpload({
-  fileInputId: 'm-photo-file',
-  previewId:   'photo-preview',
-  placeholderId: 'photo-placeholder',
-  clearBtnId:  'photo-clear',
-});
+// ── Google sign-in ────────────────────────────────────────────────────────
 
-const sigCtrl = setupImageUpload({
-  fileInputId: 'm-sig-file',
-  previewId:   'sig-preview',
-  placeholderId: 'sig-placeholder',
-  clearBtnId:  'sig-clear',
-});
+$('google-signin-btn').addEventListener('click', async () => {
+  const btn = $('google-signin-btn');
+  const errEl = $('signin-error');
+  errEl.classList.add('hidden');
 
-// ── Profile load ──────────────────────────────────────────────────────────
-
-async function loadProfile() {
-  const { profile } = await chrome.storage.local.get('profile');
-  if (!profile) return;
-
-  const p = profile.personal ?? {};
-  const addr = p.address ?? {};
-
-  [
-    ['p-firstName', p.firstName],
-    ['p-lastName',  p.lastName],
-    ['p-fullName',  p.fullName],
-    ['p-email',     p.email],
-    ['p-phone',     p.phone],
-    ['p-dob',       p.dob],
-    ['p-gender',    p.gender],
-    ['p-nationality', p.nationality],
-    ['p-street',    addr.street],
-    ['p-city',      addr.city],
-    ['p-state',     addr.state],
-    ['p-zip',       addr.zip],
-    ['p-country',   addr.country],
-  ].forEach(([id, val]) => { if ($(id) && val != null) $(id).value = val; });
-
-  // Professional entries
-  const proContainer = $('pro-entries');
-  proContainer.innerHTML = '';
-  (profile.professional ?? []).forEach((entry, i) => {
-    proContainer.appendChild(makeProfCard(entry, i));
-  });
-  if ((profile.professional ?? []).length === 0) {
-    proContainer.appendChild(makeProfCard({}, 0));
-  }
-
-  // Academic entries
-  const eduContainer = $('edu-entries');
-  eduContainer.innerHTML = '';
-  (profile.academic ?? []).forEach((entry, i) => {
-    eduContainer.appendChild(makeEduCard(entry, i));
-  });
-  if ((profile.academic ?? []).length === 0) {
-    eduContainer.appendChild(makeEduCard({}, 0));
-  }
-
-  // Media
-  const m = profile.media ?? {};
-  [
-    ['m-linkedin',  m.linkedin],
-    ['m-github',    m.github],
-    ['m-twitter',   m.twitter],
-    ['m-portfolio', m.portfolio],
-  ].forEach(([id, val]) => { if ($(id) && val != null) $(id).value = val; });
-
-  photoCtrl.load(m.photo);
-  sigCtrl.load(m.signature);
-}
-
-// ── Profile save ──────────────────────────────────────────────────────────
-
-async function saveProfile() {
-  const proEntries = collectEntries('pro-entries', ['company','title','startDate','endDate','current']);
-  const eduEntries = collectEntries('edu-entries', ['institution','degree','field','startYear','endYear','gpa']);
-
-  // Auto-compute fullName if empty
-  let fullName = val('p-fullName');
-  if (!fullName) {
-    const first = val('p-firstName');
-    const last  = val('p-lastName');
-    if (first || last) fullName = [first, last].filter(Boolean).join(' ');
-  }
-
-  const profile = {
-    personal: {
-      firstName:   val('p-firstName'),
-      lastName:    val('p-lastName'),
-      fullName,
-      email:       val('p-email'),
-      phone:       val('p-phone'),
-      dob:         val('p-dob'),
-      gender:      val('p-gender'),
-      nationality: val('p-nationality'),
-      address: {
-        street:  val('p-street'),
-        city:    val('p-city'),
-        state:   val('p-state'),
-        zip:     val('p-zip'),
-        country: val('p-country'),
-      },
-    },
-    professional: proEntries,
-    academic:     eduEntries,
-    media: {
-      linkedin:  val('m-linkedin'),
-      github:    val('m-github'),
-      twitter:   val('m-twitter'),
-      portfolio: val('m-portfolio'),
-      photo:     photoCtrl.get(),
-      signature: sigCtrl.get(),
-    },
-  };
-
-  await chrome.storage.local.set({ profile });
-  setStatus('Saved ✓');
-}
-
-$('save-btn').addEventListener('click', saveProfile);
-
-// ── Fill current page ─────────────────────────────────────────────────────
-
-$('fill-btn').addEventListener('click', async () => {
-  // Save first so the content script always uses the latest data
-  await saveProfile();
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return;
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Signing in…`;
 
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js'],
-    });
-  } catch (err) {
-    console.error('InstaForm: inject failed', err);
-    setStatus('Could not fill this page', false);
-  }
+    const user = await signIn();          // from auth.js
 
-  // Close the popup so the user sees the filled form
+    // If no profile exists yet, seed it from Google data
+    const { profile } = await chrome.storage.local.get('profile');
+    if (!profile) {
+      await chrome.storage.local.set({
+        profile: {
+          personal: {
+            firstName: user.firstName,
+            lastName:  user.lastName,
+            fullName:  user.name,
+            email:     user.email,
+            phone: '', dob: '', gender: '', nationality: '',
+            address: { street: '', city: '', state: '', zip: '', country: '' },
+          },
+          professional: [],
+          academic:     [],
+          media: {
+            linkedin: '', github: '', twitter: '', portfolio: '',
+            photo: user.photo ?? '',
+            signature: '',
+          },
+        },
+      });
+      // First-time user → open profile page so they can complete it
+      chrome.tabs.create({ url: chrome.runtime.getURL('profile/profile.html') });
+      window.close();
+      return;
+    }
+
+    populateChip(user);
+    showScreen('main');
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66 2.84-.62-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Sign in with Google`;
+
+    const msg = err.message.includes('OAuth2') || err.message.includes('client')
+      ? 'OAuth not configured. See README § Google OAuth Setup.'
+      : err.message.includes('cancel') || err.message.includes('denied')
+      ? 'Sign-in was cancelled.'
+      : `Sign-in failed: ${err.message}`;
+
+    errEl.textContent = msg;
+    errEl.classList.remove('hidden');
+  }
+});
+
+// ── Fill this page ────────────────────────────────────────────────────────
+
+$('fill-btn').addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+  try {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+  } catch (err) {
+    console.error('InstaForm: inject failed', err.message);
+  }
   window.close();
 });
 
+// ── Edit profile ──────────────────────────────────────────────────────────
+
+$('edit-btn').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('profile/profile.html') });
+  window.close();
+});
+
+// ── Sign out ──────────────────────────────────────────────────────────────
+
+$('signout-btn').addEventListener('click', async () => {
+  await signOut();    // from auth.js
+  showScreen('signin');
+  $('signin-error').classList.add('hidden');
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────
-loadProfile();
+
+async function init() {
+  const user = await getStoredUser();   // from auth.js
+  if (user) {
+    populateChip(user);
+    showScreen('main');
+  } else {
+    showScreen('signin');
+  }
+}
+
+init();

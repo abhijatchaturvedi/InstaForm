@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstaForm — Profile</title>
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       Sign-in overlay — shown until authenticated
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div id="signin-overlay" class="signin-overlay hidden">
+    <div class="signin-card">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.09 12.11a1 1 0 0 0-.09 1.1L7 19h10l3-5.79a1 1 0 0 0-.09-1.1L13 2Z" fill="#818CF8"/>
+          <path d="M13 2v17H7l-3-5.79a1 1 0 0 1 .09-1.1L13 2Z" fill="#4F46E5"/>
+          <line x1="8" y1="19" x2="8" y2="22" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="19" x2="16" y2="22" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">InstaForm</span>
+      </div>
+
+      <h1 class="signin-heading">Sign in to continue</h1>
+      <p class="signin-body">
+        Connect your Google account so InstaForm knows who you are.
+        Your profile data is stored only on this device and never sent anywhere.
+      </p>
+
+      <button id="signin-btn" class="btn btn-google">
+        <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66 2.84-.62-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign in with Google
+      </button>
+
+      <p id="signin-error" class="signin-error hidden"></p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       Main app (hidden until authenticated)
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div id="app" class="hidden">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.09 12.11a1 1 0 0 0-.09 1.1L7 19h10l3-5.79a1 1 0 0 0-.09-1.1L13 2Z" fill="#818CF8"/>
+          <path d="M13 2v17H7l-3-5.79a1 1 0 0 1 .09-1.1L13 2Z" fill="#4F46E5"/>
+          <line x1="8" y1="19" x2="8" y2="22" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="19" x2="16" y2="22" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">InstaForm</span>
+        <span class="brand-sub">Profile</span>
+      </div>
+      <div class="topbar-actions">
+        <span id="save-status" class="save-status"></span>
+        <button id="save-btn" class="btn btn-primary">Save Profile</button>
+      </div>
+    </header>
+
+    <div class="layout">
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <nav class="sidenav">
+          <a class="nav-item active" data-target="identity" href="#identity">
+            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Identity
+          </a>
+          <a class="nav-item" data-target="address" href="#address">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M10 2C7.2 2 5 4.2 5 7c0 4 5 11 5 11s5-7 5-11c0-2.8-2.2-5-5-5Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="7" r="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+            Address
+          </a>
+          <a class="nav-item" data-target="work" href="#work">
+            <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="6" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 6V5a3 3 0 0 1 6 0v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Work
+          </a>
+          <a class="nav-item" data-target="education" href="#education">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M10 3L2 7l8 4 8-4-8-4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 9v4c0 2.2 2.2 4 5 4s5-1.8 5-4V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Education
+          </a>
+          <a class="nav-item" data-target="online" href="#online">
+            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.5C8 5 7 7.4 7 10s1 5 3 7.5M10 2.5C12 5 13 7.4 13 10s-1 5-3 7.5M2.5 10h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Online
+          </a>
+        </nav>
+
+        <!-- Data section -->
+        <div class="sidebar-data">
+          <p class="sidebar-section-label">Data</p>
+          <div class="data-btns">
+            <button id="export-btn" class="btn btn-data" title="Download profile as JSON">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Export
+            </button>
+            <label class="btn btn-data" title="Load profile from JSON file" for="import-file">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 10V2M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Import
+            </label>
+            <input type="file" id="import-file" accept=".json,application/json" class="hidden" />
+          </div>
+        </div>
+
+        <!-- Connected account -->
+        <div class="sidebar-account">
+          <div class="account-avatar" id="account-avatar"></div>
+          <div class="account-info">
+            <span class="account-name"  id="account-name"></span>
+            <span class="account-email" id="account-email"></span>
+          </div>
+          <button id="signout-btn" class="signout-btn" title="Sign out">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main" id="main-scroll">
+
+        <!-- Identity -->
+        <section class="section" id="identity">
+          <div class="section-header">
+            <h2 class="section-title">Identity</h2>
+            <p class="section-desc">Your core personal details — name, email, phone, and demographics.</p>
+          </div>
+          <div class="card">
+            <div class="form-row">
+              <div class="field"><label for="p-firstName">First Name</label>
+                <input type="text" id="p-firstName" placeholder="Jane" autocomplete="off" /></div>
+              <div class="field"><label for="p-lastName">Last Name</label>
+                <input type="text" id="p-lastName" placeholder="Doe" autocomplete="off" /></div>
+            </div>
+            <div class="field">
+              <label for="p-fullName">Full Name <span class="label-hint">leave blank to auto-combine</span></label>
+              <input type="text" id="p-fullName" placeholder="Jane Doe" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="p-email">Email</label>
+                <input type="email" id="p-email" placeholder="jane@example.com" autocomplete="off" /></div>
+              <div class="field"><label for="p-phone">Phone</label>
+                <input type="tel" id="p-phone" placeholder="+1 555 000 0000" autocomplete="off" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="p-dob">Date of Birth</label>
+                <input type="date" id="p-dob" /></div>
+              <div class="field"><label for="p-gender">Gender</label>
+                <select id="p-gender">
+                  <option value="">— select —</option>
+                  <option>Male</option><option>Female</option>
+                  <option>Non-binary</option><option>Prefer not to say</option>
+                </select></div>
+            </div>
+            <div class="field field-half">
+              <label for="p-nationality">Nationality</label>
+              <input type="text" id="p-nationality" placeholder="e.g. American" autocomplete="off" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Address -->
+        <section class="section" id="address">
+          <div class="section-header">
+            <h2 class="section-title">Address</h2>
+            <p class="section-desc">Used to fill street, city, state, postal code, and country fields.</p>
+          </div>
+          <div class="card">
+            <div class="field"><label for="p-street">Street</label>
+              <input type="text" id="p-street" placeholder="123 Main St" autocomplete="off" /></div>
+            <div class="form-row form-row-3">
+              <div class="field"><label for="p-city">City</label>
+                <input type="text" id="p-city" placeholder="San Francisco" autocomplete="off" /></div>
+              <div class="field"><label for="p-state">State / Province</label>
+                <input type="text" id="p-state" placeholder="CA" autocomplete="off" /></div>
+              <div class="field"><label for="p-zip">ZIP / Postal Code</label>
+                <input type="text" id="p-zip" placeholder="94103" autocomplete="off" /></div>
+            </div>
+            <div class="field field-half">
+              <label for="p-country">Country</label>
+              <input type="text" id="p-country" placeholder="United States" autocomplete="off" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Work -->
+        <section class="section" id="work">
+          <div class="section-header">
+            <h2 class="section-title">Work Experience</h2>
+            <p class="section-desc">Add as many jobs as you need. The first entry fills most single-job forms.</p>
+          </div>
+          <div id="pro-entries"></div>
+          <button class="btn btn-ghost add-btn" data-type="pro">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Add Job
+          </button>
+        </section>
+
+        <!-- Education -->
+        <section class="section" id="education">
+          <div class="section-header">
+            <h2 class="section-title">Education</h2>
+            <p class="section-desc">Add each degree separately. The first entry fills most academic forms.</p>
+          </div>
+          <div id="edu-entries"></div>
+          <button class="btn btn-ghost add-btn" data-type="edu">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Add Degree
+          </button>
+        </section>
+
+        <!-- Online -->
+        <section class="section" id="online">
+          <div class="section-header">
+            <h2 class="section-title">Online Presence</h2>
+            <p class="section-desc">Social profiles, portfolio URL, and profile images.</p>
+          </div>
+          <div class="card">
+            <div class="form-row">
+              <div class="field"><label for="m-linkedin">LinkedIn URL</label>
+                <input type="url" id="m-linkedin" placeholder="https://linkedin.com/in/janedoe" autocomplete="off" /></div>
+              <div class="field"><label for="m-github">GitHub URL</label>
+                <input type="url" id="m-github" placeholder="https://github.com/janedoe" autocomplete="off" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="m-twitter">Twitter / X</label>
+                <input type="text" id="m-twitter" placeholder="@janedoe" autocomplete="off" /></div>
+              <div class="field"><label for="m-portfolio">Portfolio / Website</label>
+                <input type="url" id="m-portfolio" placeholder="https://janedoe.dev" autocomplete="off" /></div>
+            </div>
+          </div>
+
+          <div class="section-header" style="margin-top:28px">
+            <h2 class="section-title">Images</h2>
+            <p class="section-desc">Stored locally. Injected into file-upload fields on forms.</p>
+          </div>
+          <div class="images-row">
+            <div class="image-block">
+              <span class="image-label">Profile Photo</span>
+              <label class="image-drop" for="m-photo-file" id="photo-drop">
+                <img id="photo-preview" class="image-preview hidden" alt="photo" />
+                <div class="image-placeholder" id="photo-placeholder">
+                  <svg viewBox="0 0 40 40" fill="none" width="36" height="36"><circle cx="20" cy="14" r="7" stroke="#818CF8" stroke-width="1.5"/><path d="M6 36c0-7.7 6.3-14 14-14s14 6.3 14 14" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span>Click or drag to upload</span>
+                  <span class="image-sub">PNG, JPG up to 2 MB</span>
+                </div>
+              </label>
+              <input type="file" id="m-photo-file" accept="image/*" class="hidden" />
+              <button class="btn btn-ghost btn-sm remove-image hidden" id="photo-clear">Remove</button>
+            </div>
+            <div class="image-block">
+              <span class="image-label">Signature</span>
+              <label class="image-drop" for="m-sig-file" id="sig-drop">
+                <img id="sig-preview" class="image-preview hidden" alt="signature" />
+                <div class="image-placeholder" id="sig-placeholder">
+                  <svg viewBox="0 0 40 40" fill="none" width="36" height="36"><path d="M4 30c4-9 7-14 10-14s3 8 6 8 7-16 12-16" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Click or drag to upload</span>
+                  <span class="image-sub">PNG, JPG up to 2 MB</span>
+                </div>
+              </label>
+              <input type="file" id="m-sig-file" accept="image/*" class="hidden" />
+              <button class="btn btn-ghost btn-sm remove-image hidden" id="sig-clear">Remove</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div><!-- .layout -->
+  </div><!-- #app -->
+
+  <script src="../auth.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>
