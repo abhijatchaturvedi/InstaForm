@@ -36,61 +36,21 @@ InstaForm is a Chrome extension that stores your personal profile in a local vau
 
 > InstaForm is not yet on the Chrome Web Store. Load it manually in developer mode.
 
-1. Complete the [Google OAuth Setup](#google-oauth-setup) below — the extension won't work without it
-2. Download or clone this repository
-3. Open Chrome and go to `chrome://extensions`
-4. Enable **Developer mode** (toggle in the top-right)
-5. Click **Load unpacked** and select the `InstaForm/` folder
-6. The lightning bolt icon appears in your toolbar — pin it for easy access
+1. Download or clone this repository
+2. Open Chrome and go to `chrome://extensions`
+3. Enable **Developer mode** (toggle in the top-right)
+4. Click **Load unpacked** and select the `InstaForm/` folder
+5. The lightning bolt icon appears in your toolbar — pin it for easy access
 
-## Google OAuth Setup
-
-InstaForm uses Google's OAuth to identify you before giving access to your profile vault. This is a one-time setup.
-
-### Step 1 — Create a Google Cloud project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Click **Select a project → New Project**
-3. Give it any name (e.g. "InstaForm") and click **Create**
-
-### Step 2 — Enable the People API
-
-1. In your new project, go to **APIs & Services → Library**
-2. Search for **"Google People API"** and click **Enable**
-
-### Step 3 — Create OAuth credentials
-
-1. Go to **APIs & Services → Credentials**
-2. Click **Create Credentials → OAuth client ID**
-3. If prompted, configure the consent screen first (External, your email, app name "InstaForm")
-4. For **Application type**, choose **Chrome App**
-5. For **Application ID**, paste your extension's ID from `chrome://extensions`
-6. Click **Create** — you'll get a Client ID that looks like `123456789-abc.apps.googleusercontent.com`
-
-### Step 4 — Add the Client ID to the manifest
-
-Open `manifest.json` and replace the placeholder:
-
-```json
-"oauth2": {
-  "client_id": "YOUR_ACTUAL_CLIENT_ID.apps.googleusercontent.com",
-  "scopes": ["openid", "email", "profile"]
-}
-```
-
-Then reload the extension at `chrome://extensions`.
-
-> **Tip — consistent extension ID:** When running unpacked, Chrome generates a random ID each time unless you add a `key` to the manifest. To get a stable ID, go to `chrome://extensions`, find InstaForm, and use that ID in Google Cloud Console. Alternatively, [generate a key](https://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions#set-key) and add it to the manifest.
+> **Prerequisite:** You must be signed in to Chrome (`Chrome menu → Settings → Sign in to Chrome`). InstaForm reads your Chrome profile to protect access to your vault — no OAuth app or setup required.
 
 ## Usage
 
 ### First-time setup
 
-1. Click the **InstaForm** icon → click **Sign in with Google**
-2. Chrome shows the account chooser — select your account
-3. InstaForm auto-populates your name, email, and photo from Google
-4. The profile editor opens automatically — fill in the remaining fields
-5. Click **Save Profile** (or press `Ctrl+S`)
+1. Click the **InstaForm** icon — it reads your Chrome profile automatically
+2. The profile editor opens in a new tab — your email is pre-filled
+3. Fill in your details and click **Save Profile** (or press `Ctrl+S`)
 
 ### Filling a form
 
@@ -216,8 +176,8 @@ InstaForm/
 
 **Key design decisions:**
 
-- **Auth via `chrome.identity`** — uses Chrome's built-in OAuth integration; no password or session to manage. `getStoredUser()` reads from `chrome.storage.local` so the auth check is synchronous-feeling on subsequent opens
-- **Profile pre-population** — on first sign-in, name/email/photo from the Google userinfo endpoint are written directly into the profile, so the user starts with a non-empty vault
+- **Auth via `chrome.identity.getProfileUserInfo`** — reads the signed-in Chrome account directly; no OAuth app, no client_id, no consent screen. `getStoredUser()` caches the result in `chrome.storage.local` so subsequent checks are instant
+- **Profile pre-population** — on first open, the Chrome account email is written into the profile automatically
 - **On-demand content script injection** — injected fresh per trigger; `window.__instaformActive` guards against double-execution
 - **Native value setter** — React/Vue/Angular intercept `element.value = ...`; InstaForm uses `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set` to bypass the override, then fires synthetic events
 - **Versioned export format** — the JSON envelope carries a `version` field so future migrations can be handled without data loss

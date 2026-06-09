@@ -31,65 +31,55 @@ body {
 .hidden { display: none !important; }
 
 /* ── Brand ────────────────────────────────────────────────────────────── */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.brand { display: flex; align-items: center; gap: 8px; }
 .brand-icon { width: 22px; height: 22px; }
 .brand-name {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -.3px;
+  font-size: 15px; font-weight: 700; letter-spacing: -.3px;
   background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .toprow { display: flex; align-items: center; justify-content: space-between; }
 
-/* ── Sign-in screen ───────────────────────────────────────────────────── */
-.signin-tagline {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  margin-top: 4px;
+/* ── Auth states ──────────────────────────────────────────────────────── */
+.auth-state {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 6px 0 4px; text-align: center;
 }
 
-.signin-note {
-  font-size: 11px;
-  color: var(--text-xs);
-  line-height: 1.6;
+.auth-icon { opacity: .8; }
+
+.auth-msg {
+  font-size: 12px; color: var(--text-xs);
 }
 
-.signin-error {
-  font-size: 11px;
-  color: var(--danger);
-  line-height: 1.5;
+.auth-msg-bold {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+
+.auth-hint {
+  font-size: 11px; color: var(--text-xs); line-height: 1.6;
+}
+
+.auth-path {
+  display: inline-block; margin-top: 3px;
+  font-family: monospace; font-size: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 3px; padding: 2px 6px; color: var(--text-dim);
 }
 
 /* ── Profile chip ─────────────────────────────────────────────────────── */
 .profile-chip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 9px 12px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 9px 12px;
 }
-
 .chip-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
   background: linear-gradient(135deg, #818cf8, #4f46e5);
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; color: #fff;
-  overflow: hidden;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff; overflow: hidden;
 }
 .chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
 .chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .chip-name  { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip-email { font-size: 11px; color: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -99,61 +89,25 @@ body {
   display: flex; align-items: center; justify-content: center; gap: 7px;
   border: none; border-radius: var(--radius-sm);
   font-size: 13px; font-weight: 600; font-family: inherit;
-  cursor: pointer; transition: background .15s, opacity .15s, transform .1s;
+  cursor: pointer; transition: background .15s, transform .1s;
   width: 100%; padding: 9px 14px; line-height: 1;
 }
 .btn:active { transform: scale(.97); }
 
-.btn-google {
-  background: #fff;
-  color: #1f1f1f;
-  font-weight: 500;
-  padding: 10px 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.3);
-}
-.btn-google:hover { background: #f5f5f5; }
-
 .btn-fill {
-  background: var(--accent);
-  color: #fff;
-  padding: 11px 14px;
-  font-size: 14px;
+  background: var(--accent); color: #fff;
+  padding: 11px 14px; font-size: 14px;
 }
 .btn-fill:hover { background: var(--accent-h); }
-.btn-fill:disabled { opacity: .4; cursor: not-allowed; }
 
 .btn-secondary {
-  background: var(--surface);
-  color: var(--text-dim);
+  background: var(--surface); color: var(--text-dim);
   border: 1px solid var(--border);
-  flex: 1;
 }
 .btn-secondary:hover { background: var(--surface2); color: var(--text); }
 
-.btn-ghost-sm {
-  background: none;
-  color: var(--text-xs);
-  border: none;
-  font-size: 11px;
-  font-weight: 500;
-  width: auto;
-  padding: 6px 8px;
-  flex-shrink: 0;
-}
-.btn-ghost-sm:hover { color: var(--danger); }
-
 /* ── Misc ─────────────────────────────────────────────────────────────── */
-.action-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.shortcut-hint {
-  font-size: 11px;
-  color: var(--text-xs);
-  text-align: center;
-}
+.shortcut-hint { font-size: 11px; color: var(--text-xs); text-align: center; }
 
 kbd {
   display: inline-block; padding: 1px 5px;
@@ -163,13 +117,9 @@ kbd {
 
 .divider { height: 1px; background: var(--border); margin: 2px 0; }
 
-/* Loading spinner inside the Google button */
 .spinner {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(0,0,0,.15);
-  border-top-color: #4285F4;
-  border-radius: 50%;
-  animation: spin .6s linear infinite;
-  flex-shrink: 0;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border); border-top-color: var(--accent-lt);
+  border-radius: 50%; animation: spin .6s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
